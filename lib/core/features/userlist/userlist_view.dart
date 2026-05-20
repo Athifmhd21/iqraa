@@ -1,53 +1,51 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import 'package:iqraa/core/features/userlist/userlist_viewmodel.dart';
 
-class UserListScreen extends StatefulWidget {
-  @override
-  _UserListScreenState createState() => _UserListScreenState();
-}
-
-class _UserListScreenState extends State<UserListScreen> {
-  List users = [];
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    fetchUsers();
-  }
-
-  Future<void> fetchUsers() async {
-    final response = await http.get(
-      Uri.parse("https://jsonplaceholder.typicode.com/users"),
-    );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        users = jsonDecode(response.body);
-        isLoading = false;
-      });
-    } else {
-      throw Exception("Failed to load users");
-    }
-  }
-
+class UserListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text("Users"),
+    return ChangeNotifierProvider(
+      create: (_) => UserListViewModel()..fetchUsers(),
+      child: Scaffold(
         backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.white))
-          : ListView.builder(
-              itemCount: users.length,
+        appBar: AppBar(
+          title: const Text("Users"),
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+        body: Consumer<UserListViewModel>(
+          builder: (context, vm, child) {
+            if (vm.isLoading) {
+              return const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              );
+            }
+
+            if (vm.errorMessage != null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      vm.errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: vm.fetchUsers,
+                      child: const Text("Retry"),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return ListView.builder(
+              itemCount: vm.users.length,
               itemBuilder: (context, index) {
-                final user = users[index];
+                final user = vm.users[index];
 
                 return Container(
                   margin: const EdgeInsets.all(10),
@@ -81,7 +79,10 @@ class _UserListScreenState extends State<UserListScreen> {
                   ),
                 );
               },
-            ),
+            );
+          },
+        ),
+      ),
     );
   }
 }

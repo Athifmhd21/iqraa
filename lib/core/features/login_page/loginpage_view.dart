@@ -27,7 +27,6 @@ class LoginScreen extends StatelessWidget {
                 CustomHeader(title: "LOGIN"),
 
                 /// Email Field
-                ///
                 CustomTextField(
                   label: "Email",
                   controller: provider.emailController,
